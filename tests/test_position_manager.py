@@ -7,13 +7,13 @@ def test_open_long():
     pos = pm.open_position("LONG", 95000, 5.0, atr=150)
     assert pos.direction == "LONG"
     assert pos.entry_price == 95000
-    assert pos.stop_loss == 95000 - 150 * 1.5
+    assert pos.stop_loss == 95000 - 150 * 0.8
 
 
 def test_open_short():
     pm = PositionManager(fake_redis=True)
     pos = pm.open_position("SHORT", 95000, 5.0, atr=150)
-    assert pos.stop_loss == 95000 + 150 * 1.5
+    assert pos.stop_loss == 95000 + 150 * 0.8
 
 
 def test_trailing_stop_long_moves_up():
@@ -45,9 +45,13 @@ def test_stop_loss_triggered_long():
 def test_signal_reversal_closes():
     pm = PositionManager(fake_redis=True)
     pm.open_position("LONG", 95000, 5.0, atr=100)
+    # Weak reversal — should hold
     result = pm.check_signal_exit({"direction": "down", "score": 35})
+    assert result["action"] == "HOLD"
+    # Strong reversal (score < 30) — should close
+    result = pm.check_signal_exit({"direction": "SHORT", "score": 25})
     assert result["action"] == "CLOSE"
-    assert result["reason"] == "signal_reversal"
+    assert result["reason"] == "strong_reversal"
 
 
 def test_position_stays_open_if_profitable_and_confirmed():
@@ -58,12 +62,20 @@ def test_position_stays_open_if_profitable_and_confirmed():
     assert result["action"] == "HOLD"
 
 
-def test_position_closes_at_cooldown_if_losing():
+def test_position_holds_small_loss_if_signals_ok():
     pm = PositionManager(fake_redis=True)
     pm.open_position("LONG", 95000, 5.0, atr=100)
-    result = pm.check_cooldown_review(current_price=94950, signal={"direction": "up", "score": 65})
+    # Small loss + signals confirm → hold
+    result = pm.check_cooldown_review(current_price=94990, signal={"direction": "up", "score": 65})
+    assert result["action"] == "HOLD"
+
+
+def test_position_closes_at_cooldown_if_big_loss():
+    pm = PositionManager(fake_redis=True)
+    pm.open_position("LONG", 95000, 5.0, atr=100)
+    # Big loss (> 30% of stake at 50x) — need ~0.6% drop = $570
+    result = pm.check_cooldown_review(current_price=94400, signal={"direction": "up", "score": 65})
     assert result["action"] == "CLOSE"
-    assert result["reason"] == "cooldown_losing"
 
 
 def test_pnl_long():

@@ -16,11 +16,11 @@ def test_half_kelly_negative_edge():
     assert k == 0.0
 
 
-def test_bet_size_capped_at_5pct():
+def test_bet_size_capped_at_25pct():
     size = bet_size(1000, 0.95)
-    assert size <= 50.0
+    assert size <= 250.0
 
 
 def test_bet_size_min_stake():
     size = bet_size(1000, 0.52)
-    assert size >= 15.0
+    assert size >= 50.0

@@ -48,7 +48,7 @@ def test_compute_trade():
     assert trade["action"] == "TRADE"
     assert trade["direction"] == "LONG"
     assert trade["stake"] > 0
-    assert trade["trailing_stop_distance"] == 225.0
+    assert trade["trailing_stop_distance"] == 120.0  # ATR * 0.8
 
 
 def test_cooldown_configurable():

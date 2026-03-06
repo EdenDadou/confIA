@@ -1,0 +1,42 @@
+databases:
+  - name: trade-db
+    plan: starter
+    databaseName: trade
+    postgresMajorVersion: "16"
+
+services:
+  - type: redis
+    name: trade-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+  - type: web
+    name: trade-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn dashboard:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: COOLDOWN_SECONDS
+        value: "60"
+      - key: INITIAL_BANKROLL
+        value: "100"
+      - key: MIN_WAIT_SECONDS
+        value: "120"
+      - key: MIN_QUALITY
+        value: "0.55"
+      - key: TRADE_SYMBOLS
+        value: "BTCUSDT"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trade-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: trade-redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+    healthCheckPath: /api/health

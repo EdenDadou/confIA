@@ -20,7 +20,7 @@ class Position:
     win_prob: float = 0.5
 
     def __post_init__(self):
-        self.stop_distance = self.atr * 1.5
+        self.stop_distance = self.atr * 0.8  # tight stop — lock profits fast
         if self.direction == "LONG":
             self.stop_loss = self.entry_price - self.stop_distance
             self.highest_price = self.entry_price
@@ -33,7 +33,7 @@ class Position:
             pct = (current_price - self.entry_price) / self.entry_price
         else:
             pct = (self.entry_price - current_price) / self.entry_price
-        return round(self.stake * pct * 10, 4)  # leveraged PnL
+        return round(self.stake * pct * 50, 4)  # 50x leverage — aggressive
 
     def duration(self) -> float:
         return round(time.time() - self.open_time, 1)
@@ -109,33 +109,53 @@ class PositionManager:
                 "stop_loss": round(pos.stop_loss, 2)}
 
     def check_signal_exit(self, signal: dict) -> dict:
+        """Only exit on STRONG signal reversal — 3+ agents must disagree."""
         if not self.position:
             return {"action": "NONE"}
         pos = self.position
         sig_dir = signal.get("direction", "neutral")
         score = int(signal.get("score", 50))
-        if pos.direction == "LONG" and sig_dir in ("down", "SHORT") and score < 40:
-            return {"action": "CLOSE", "reason": "signal_reversal"}
-        if pos.direction == "SHORT" and sig_dir in ("up", "LONG") and score > 60:
-            return {"action": "CLOSE", "reason": "signal_reversal"}
+        # Need a strong reversal (score < 30 or > 70) to override an open position
+        if pos.direction == "LONG" and sig_dir in ("down", "SHORT") and score < 30:
+            return {"action": "CLOSE", "reason": "strong_reversal"}
+        if pos.direction == "SHORT" and sig_dir in ("up", "LONG") and score > 70:
+            return {"action": "CLOSE", "reason": "strong_reversal"}
         return {"action": "HOLD"}
 
     def check_cooldown_review(self, current_price: float, signal: dict) -> dict:
-        """Called when cooldown expires. Decide: keep open or close."""
+        """Called when cooldown expires. Smart hold logic — stay in if loss is small."""
         if not self.position:
             return {"action": "NONE"}
         pnl = self.position.unrealized_pnl(current_price)
-        if pnl <= 0:
-            return {"action": "CLOSE", "reason": "cooldown_losing", "pnl": pnl}
+        loss_pct = abs(pnl) / self.position.stake if self.position.stake > 0 else 0
         sig_dir = signal.get("direction", "neutral")
         pos_dir = self.position.direction
+
         confirms = (
             (pos_dir == "LONG" and sig_dir in ("up", "neutral", "LONG")) or
             (pos_dir == "SHORT" and sig_dir in ("down", "neutral", "SHORT"))
         )
-        if confirms:
-            return {"action": "HOLD", "reason": "profitable_confirmed", "pnl": pnl}
-        return {"action": "CLOSE", "reason": "cooldown_no_confirmation", "pnl": pnl}
+        contradicts = (
+            (pos_dir == "LONG" and sig_dir in ("down", "SHORT")) or
+            (pos_dir == "SHORT" and sig_dir in ("up", "LONG"))
+        )
+
+        # In profit → hold if signals don't strongly contradict
+        if pnl > 0:
+            if contradicts:
+                return {"action": "CLOSE", "reason": "profit_taking_reversal", "pnl": pnl}
+            return {"action": "HOLD", "reason": "profitable", "pnl": pnl}
+
+        # Small loss (< 30% of stake) + signals still OK → hold, give it room
+        if loss_pct < 0.30 and not contradicts:
+            return {"action": "HOLD", "reason": "small_loss_holding", "pnl": pnl}
+
+        # Small loss but signals reversed → cut early
+        if contradicts:
+            return {"action": "CLOSE", "reason": "loss_signals_reversed", "pnl": pnl}
+
+        # Big loss (≥ 30% of stake) → close regardless
+        return {"action": "CLOSE", "reason": "stop_loss_pct", "pnl": pnl}
 
     @property
     def has_position(self) -> bool:

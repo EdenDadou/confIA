@@ -96,32 +96,49 @@ Current bankroll: ${self.bankroll:.2f} | Consecutive losses: {self.consecutive_l
             return self._fallback_decision(technical, sentiment, onchain, orderflow)
 
     def _fallback_decision(self, tech: dict, sent: dict, chain: dict, flow: dict) -> dict:
+        # Technical leads, others support — be decisive
         score = int(
-            0.30 * int(tech.get("score", 50)) +
+            0.35 * int(tech.get("score", 50)) +
             0.20 * int(sent.get("score", 50)) +
-            0.25 * int(chain.get("score", 50)) +
+            0.20 * int(chain.get("score", 50)) +
             0.25 * int(flow.get("score", 50))
         )
         score = max(0, min(100, score))
-        if score >= 50:
-            direction = "LONG"
-        else:
-            direction = "SHORT"
+
         # Count agreements
         dirs = [tech.get("direction", "neutral"), sent.get("direction", "neutral"),
                 chain.get("direction", "neutral"), flow.get("direction", "neutral")]
         up_count = sum(1 for d in dirs if d == "up")
         down_count = sum(1 for d in dirs if d == "down")
-        if down_count > up_count:
-            direction = "SHORT"
-        elif up_count > down_count:
+
+        # Be decisive — amplify score away from 50
+        if up_count > down_count:
             direction = "LONG"
-        confidence = 0.7 if max(up_count, down_count) >= 3 else 0.5
+            score = max(score, 55 + up_count * 5)  # push score higher
+        elif down_count > up_count:
+            direction = "SHORT"
+            score = min(score, 45 - down_count * 5)  # push score lower
+        else:
+            # Split — follow technical
+            tech_dir = tech.get("direction", "neutral")
+            direction = "LONG" if tech_dir != "down" else "SHORT"
+
+        score = max(0, min(100, score))
+
+        # Confidence based on agreement strength
+        agreement = max(up_count, down_count)
+        if agreement >= 3:
+            confidence = 0.78
+        elif agreement >= 2:
+            confidence = 0.65
+        else:
+            confidence = 0.55  # still trade, just smaller
+
         return {
             "score": score,
             "direction": direction,
             "confidence": confidence,
-            "reasoning": f"Fallback: {up_count} bullish, {down_count} bearish agents. Weighted score={score}."
+            "reasoning": f"Fallback: {up_count} bullish, {down_count} bearish agents. Weighted score={score}. Confidence={confidence}."
         }
 
     def compute_trade(self, decision: dict, atr: float) -> dict:
@@ -129,12 +146,14 @@ Current bankroll: ${self.bankroll:.2f} | Consecutive losses: {self.consecutive_l
         direction = decision["direction"]
         confidence = decision.get("confidence", 0.5)
 
-        # Win prob from score distance from 50
+        # Win prob — amplified from score + confidence
         if direction == "LONG":
-            win_prob = min(0.88, 0.50 + (score - 50) / 100.0)
+            win_prob = 0.50 + (score - 50) / 80.0  # steeper curve
         else:
-            win_prob = min(0.88, 0.50 + (50 - score) / 100.0)
-        win_prob = max(0.50, win_prob)
+            win_prob = 0.50 + (50 - score) / 80.0
+        # Boost from confidence
+        win_prob = win_prob * 0.6 + confidence * 0.4
+        win_prob = max(0.52, min(0.88, win_prob))  # always slightly above 50%
 
         stake = bet_size(self.bankroll, win_prob)
 
@@ -146,7 +165,7 @@ Current bankroll: ${self.bankroll:.2f} | Consecutive losses: {self.consecutive_l
             "confidence": round(confidence, 3),
             "stake": stake,
             "atr": atr,
-            "trailing_stop_distance": round(atr * 1.5, 2),
+            "trailing_stop_distance": round(atr * 0.8, 2),
             "reasoning": decision.get("reasoning", ""),
         }
 
