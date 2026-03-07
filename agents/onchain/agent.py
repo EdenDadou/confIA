@@ -121,31 +121,39 @@ class OnChainAgent:
     def _fallback_score(self, data: dict) -> dict:
         fr = data.get("funding_rate", 0.0001)
         ls = data.get("long_short_ratio", 1.0)
-        if fr > 0.0003:
-            fr_score = 25
-        elif fr > 0.0001:
-            fr_score = 40
+        reasons = []
+
+        # Funding rate — contrarian: high positive = crowded longs = bearish
+        # But normal funding (0.0001) is neutral, not bearish
+        if fr > 0.0005:
+            fr_score = 25; reasons.append("Funding very high (bearish)")
+        elif fr > 0.0003:
+            fr_score = 38; reasons.append("Funding elevated")
         elif fr > -0.0001:
-            fr_score = 50
+            fr_score = 50; reasons.append("Funding neutral")
         elif fr > -0.0003:
-            fr_score = 62
+            fr_score = 62; reasons.append("Funding negative (bullish)")
         else:
-            fr_score = 75
-        if ls > 2.0:
-            ls_score = 30
+            fr_score = 75; reasons.append("Funding very negative (bullish)")
+
+        # Long/Short ratio — contrarian: too many longs = bearish
+        if ls > 2.5:
+            ls_score = 28; reasons.append(f"L/S={ls:.1f} crowded longs")
         elif ls > 1.5:
-            ls_score = 40
-        elif ls > 0.8:
-            ls_score = 50
+            ls_score = 42; reasons.append(f"L/S={ls:.1f} leaning long")
+        elif ls > 0.7:
+            ls_score = 52; reasons.append(f"L/S={ls:.1f} balanced")
         else:
-            ls_score = 65
-        score = max(0, min(100, int(0.55 * fr_score + 0.45 * ls_score)))
-        direction = "up" if score >= 58 else "down" if score <= 42 else "neutral"
+            ls_score = 68; reasons.append(f"L/S={ls:.1f} shorts crowded")
+
+        score = max(0, min(100, int(0.50 * fr_score + 0.50 * ls_score)))
+        conf = min(1.0, 0.4 + abs(score - 50) / 50 * 0.4)
+        direction = "up" if score >= 52 else "down" if score <= 48 else "neutral"
         return {
             "score": score,
             "direction": direction,
-            "confidence": 0.5,
-            "reasoning": f"Fallback: funding={fr:.4%}, L/S ratio={ls:.2f}"
+            "confidence": round(conf, 2),
+            "reasoning": f"On-chain: {', '.join(reasons)}"
         }
 
     async def run(self):

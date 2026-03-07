@@ -10,6 +10,7 @@ class Position:
     entry_price: float
     stake: float
     atr: float
+    stop_multiplier: float = 0.8
     stop_distance: float = 0.0
     stop_loss: float = 0.0
     highest_price: float = 0.0
@@ -20,7 +21,7 @@ class Position:
     win_prob: float = 0.5
 
     def __post_init__(self):
-        self.stop_distance = self.atr * 0.8  # tight stop — lock profits fast
+        self.stop_distance = self.atr * self.stop_multiplier
         if self.direction == "LONG":
             self.stop_loss = self.entry_price - self.stop_distance
             self.highest_price = self.entry_price
@@ -60,9 +61,10 @@ class PositionManager:
 
     def open_position(self, direction: str, price: float, stake: float,
                       atr: float, reasoning: str = "", score: int = 50,
-                      win_prob: float = 0.5) -> Position:
+                      win_prob: float = 0.5, stop_multiplier: float = 0.8) -> Position:
         self.position = Position(
             direction=direction, entry_price=price, stake=stake, atr=atr,
+            stop_multiplier=stop_multiplier,
             reasoning=reasoning, score=score, win_prob=win_prob,
         )
         return self.position
@@ -140,10 +142,8 @@ class PositionManager:
             (pos_dir == "SHORT" and sig_dir in ("up", "LONG"))
         )
 
-        # In profit → hold if signals don't strongly contradict
+        # In profit → let the trailing stop handle exit, don't cut winners
         if pnl > 0:
-            if contradicts:
-                return {"action": "CLOSE", "reason": "profit_taking_reversal", "pnl": pnl}
             return {"action": "HOLD", "reason": "profitable", "pnl": pnl}
 
         # Small loss (< 30% of stake) + signals still OK → hold, give it room

@@ -93,33 +93,78 @@ class TechnicalAgent:
             return self._fallback_score(indicators)
 
     def _fallback_score(self, ind: dict) -> dict:
+        score = 50
+        reasons = []
         rsi = ind["rsi"]
         hist = ind["macd"]["histogram"]
         mom = ind["momentum"]
-        if rsi < 30:
-            score = 72
-        elif rsi > 70:
-            score = 28
-        else:
-            score = 50
+        price = ind["price"]
 
+        # RSI — oversold/overbought (strong signal)
+        if rsi < 25:
+            score += 18; reasons.append(f"RSI oversold {rsi}")
+        elif rsi < 35:
+            score += 10; reasons.append(f"RSI low {rsi}")
+        elif rsi > 75:
+            score -= 18; reasons.append(f"RSI overbought {rsi}")
+        elif rsi > 65:
+            score -= 10; reasons.append(f"RSI high {rsi}")
+
+        # MACD histogram
         if hist > 0:
-            score += 8
+            score += 7; reasons.append("MACD+")
         elif hist < 0:
-            score -= 8
+            score -= 7; reasons.append("MACD-")
 
+        # Momentum
         if mom == "up":
-            score += 5
+            score += 5; reasons.append("Mom up")
         elif mom == "down":
-            score -= 5
+            score -= 5; reasons.append("Mom down")
+
+        # Bollinger Bands — price near edges
+        bb = ind.get("bollinger", {})
+        if bb:
+            bb_upper = bb.get("upper", price)
+            bb_lower = bb.get("lower", price)
+            bb_range = bb_upper - bb_lower if bb_upper > bb_lower else 1
+            bb_pos = (price - bb_lower) / bb_range  # 0=lower, 1=upper
+            if bb_pos < 0.15:
+                score += 8; reasons.append("Near BB lower")
+            elif bb_pos > 0.85:
+                score -= 8; reasons.append("Near BB upper")
+
+        # EMA alignment — price vs fast EMA
+        ema = ind.get("ema", {})
+        if ema:
+            ema_fast = ema.get("fast_12", price)
+            if price > ema_fast * 1.001:
+                score += 4; reasons.append("Above EMA12")
+            elif price < ema_fast * 0.999:
+                score -= 4; reasons.append("Below EMA12")
+
+        # VWAP
+        vwap = ind.get("vwap", price)
+        if price > vwap * 1.002:
+            score += 3; reasons.append("Above VWAP")
+        elif price < vwap * 0.998:
+            score -= 3; reasons.append("Below VWAP")
+
+        # Divergence bonus
+        div = ind.get("divergence", {})
+        if div.get("type") == "bullish":
+            score += 10; reasons.append("Bull divergence")
+        elif div.get("type") == "bearish":
+            score -= 10; reasons.append("Bear divergence")
 
         score = max(0, min(100, score))
-        direction = "up" if score >= 58 else "down" if score <= 42 else "neutral"
+        conf = min(1.0, 0.4 + abs(score - 50) / 50 * 0.5)
+        direction = "up" if score >= 52 else "down" if score <= 48 else "neutral"
         return {
             "score": score,
             "direction": direction,
-            "confidence": 0.5,
-            "reasoning": f"Fallback: RSI={rsi}, MACD hist={'positive' if hist > 0 else 'negative'}, Momentum={mom}"
+            "confidence": round(conf, 2),
+            "reasoning": f"Technical: {', '.join(reasons[:4])}"
         }
 
     async def run(self, candles_provider):

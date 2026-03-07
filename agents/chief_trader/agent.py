@@ -96,32 +96,51 @@ Current bankroll: ${self.bankroll:.2f} | Consecutive losses: {self.consecutive_l
             return self._fallback_decision(technical, sentiment, onchain, orderflow)
 
     def _fallback_decision(self, tech: dict, sent: dict, chain: dict, flow: dict) -> dict:
-        # Technical leads, others support — be decisive
+        # Weighted score — technical and sentiment lead
+        scores = {
+            "tech": int(tech.get("score", 50)),
+            "sent": int(sent.get("score", 50)),
+            "chain": int(chain.get("score", 50)),
+            "flow": int(flow.get("score", 50)),
+        }
         score = int(
-            0.35 * int(tech.get("score", 50)) +
-            0.20 * int(sent.get("score", 50)) +
-            0.20 * int(chain.get("score", 50)) +
-            0.25 * int(flow.get("score", 50))
+            0.35 * scores["tech"] +
+            0.25 * scores["sent"] +
+            0.20 * scores["chain"] +
+            0.20 * scores["flow"]
         )
         score = max(0, min(100, score))
 
-        # Count agreements
+        # Count directional votes
         dirs = [tech.get("direction", "neutral"), sent.get("direction", "neutral"),
                 chain.get("direction", "neutral"), flow.get("direction", "neutral")]
         up_count = sum(1 for d in dirs if d == "up")
         down_count = sum(1 for d in dirs if d == "down")
 
-        # Be decisive — amplify score away from 50
+        # Determine direction — majority wins, ties go to technical
         if up_count > down_count:
             direction = "LONG"
-            score = max(score, 55 + up_count * 5)  # push score higher
+            # Amplify bullish score — but don't invent conviction
+            if score < 55:
+                score = 55 + up_count * 3
         elif down_count > up_count:
             direction = "SHORT"
-            score = min(score, 45 - down_count * 5)  # push score lower
+            if score > 45:
+                score = 45 - down_count * 3
         else:
-            # Split — follow technical
+            # Tied — follow technical lead (highest weight agent)
             tech_dir = tech.get("direction", "neutral")
-            direction = "LONG" if tech_dir != "down" else "SHORT"
+            if tech_dir == "up":
+                direction = "LONG"
+                score = max(score, 55)
+            elif tech_dir == "down":
+                direction = "SHORT"
+                score = min(score, 45)
+            else:
+                # Technical neutral too — follow sentiment
+                sent_dir = sent.get("direction", "neutral")
+                direction = "LONG" if sent_dir == "up" else "SHORT"
+                score = max(score, 53) if direction == "LONG" else min(score, 47)
 
         score = max(0, min(100, score))
 

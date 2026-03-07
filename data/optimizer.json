@@ -1,0 +1,220 @@
+{
+  "params": {
+    "min_quality": 0.40800000000000003,
+    "stop_multiplier": 0.77,
+    "agent_weights": {
+      "tech": 0.35,
+      "sent": 0.2,
+      "chain": 0.2,
+      "flow": 0.25
+    },
+    "max_stake_pct": 0.256,
+    "min_agreement": 2
+  },
+  "outcomes": [
+    {
+      "quality": 0.466,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 0.3176,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.479,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 1.3642,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.433,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 1.3662,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.461,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -1.4904,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.444,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 0.0858,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.468,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 2.0932,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.48,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -0.6808,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.451,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -0.8699,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.451,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -0.7215,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.427,
+      "direction": "SHORT",
+      "won": true,
+      "pnl": 0.621,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.448,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -0.1988,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.444,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -1.0844,
+      "score": 30,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.481,
+      "direction": "LONG",
+      "won": true,
+      "pnl": 1.4649,
+      "score": 60,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.463,
+      "direction": "LONG",
+      "won": false,
+      "pnl": -0.1495,
+      "score": 65,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.463,
+      "direction": "LONG",
+      "won": false,
+      "pnl": -0.914,
+      "score": 65,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.528,
+      "direction": "LONG",
+      "won": false,
+      "pnl": -0.1121,
+      "score": 67,
+      "agreement": 3,
+      "stop_mult": 0.8
+    },
+    {
+      "quality": 0.457,
+      "direction": "LONG",
+      "won": true,
+      "pnl": 0.4089,
+      "score": 57,
+      "agreement": 3,
+      "stop_mult": 0.77,
+      "agent_dirs": {
+        "tech": "up",
+        "sent": "up",
+        "chain": "down",
+        "flow": "up"
+      }
+    },
+    {
+      "quality": 0.464,
+      "direction": "LONG",
+      "won": false,
+      "pnl": -0.2066,
+      "score": 58,
+      "agreement": 3,
+      "stop_mult": 0.77,
+      "agent_dirs": {
+        "tech": "up",
+        "sent": "up",
+        "chain": "down",
+        "flow": "up"
+      }
+    },
+    {
+      "quality": 0.447,
+      "direction": "LONG",
+      "won": false,
+      "pnl": -0.6902,
+      "score": 56,
+      "agreement": 3,
+      "stop_mult": 0.77,
+      "agent_dirs": {
+        "tech": "up",
+        "sent": "up",
+        "chain": "down",
+        "flow": "up"
+      }
+    },
+    {
+      "quality": 0.443,
+      "direction": "SHORT",
+      "won": false,
+      "pnl": -0.4196,
+      "score": 36,
+      "agreement": 3,
+      "stop_mult": 0.77,
+      "agent_dirs": {
+        "tech": "down",
+        "sent": "up",
+        "chain": "down",
+        "flow": "down"
+      }
+    }
+  ]
+}

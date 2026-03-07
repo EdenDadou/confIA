@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init)",
+      "Bash(source .venv/bin/activate && pip list 2>&1 | grep -iE \"redis|playwright|pydantic|websocket|httpx|numpy|ta |pandas\")",
+      "Bash(.venv/bin/python -m pytest tests/test_symbols.py tests/test_leverage.py -v 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/test_setup_scorer.py tests/test_optimizer.py -v 2>&1)",
+      "Bash(.venv/bin/python -m pytest tests/test_db.py -v 2>&1)",
+      "Bash(.venv/bin/python -m pytest -v 2>&1)",
+      "Bash(lsof -ti:8080 2>/dev/null | xargs kill -9 2>/dev/null; sleep 1 && PYTHONUNBUFFERED=1 .venv/bin/python -u dashboard.py)",
+      "Bash(grep -c \"ANTHROPIC_API_KEY\" /Users/eden/Desktop/trade/.env 2>/dev/null; echo \"---\"; env | grep ANTHROPIC 2>/dev/null; echo \"---\"; tail -30 /private/tmp/claude-501/-Users-eden-Desktop-trade/tasks/bjojy0u39.output | grep -i \"error\\\\|fallback\\\\|API\")"
+    ]
+  }
+}

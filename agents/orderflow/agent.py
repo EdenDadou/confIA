@@ -110,7 +110,7 @@ class OrderFlowAgent:
         else:
             fr_score = 75
         score = max(0, min(100, int(0.60 * ob_score + 0.40 * fr_score)))
-        direction = "up" if score >= 58 else "down" if score <= 42 else "neutral"
+        direction = "up" if score >= 52 else "down" if score <= 48 else "neutral"
         return {
             "score": score,
             "direction": direction,

@@ -4,49 +4,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Polymarket BTC multi-agent trading system — automated 24/7 betting on BTC price movements on Polymarket. Currently in early development (Phase 1). A standalone simulation dashboard (`dashboard.py`) exists as a prototype.
+Multi-agent BTC trading bot — automated 24/7 live trading on Bitcoin futures. Currently migrating from Python prototype to structured Node.js project. A simulation dashboard (`dashboard.py`) exists as the working prototype.
+
+## Current State
+
+**Working prototype** (`dashboard.py`): single-file Python app with embedded frontend. Connects to Binance WS, runs 4 analysis agents + chief trader, manages positions with trailing stops, and displays everything in a Jarvis-style HUD dashboard.
+
+**Key learnings from prototype:**
+- 30% win rate but positive PnL (avg win > avg loss) — risk/reward is OK, entry timing is bad
+- LONG trades are catastrophic (1W/7L) — bearish bias in agents
+- Trailing stop works well — most profitable exits come from it
+- Max hold time was killing winners — removed
+- Learning system (optimizer) adjusts parameters but agents don't truly improve
 
 ## Architecture
 
 **Multi-agent pipeline:**
-1. **Data layer** (4 parallel agents): Market (Binance WS), Sentiment (Fear & Greed, NLP), On-Chain (CoinGlass), Polymarket Monitor (odds, liquidity)
-2. **Decision layer**: Chief Trader aggregates signals with weighted scoring (tech 30%, sentiment 20%, on-chain 20%, polymarket 30%), applies 1/2 Kelly sizing, threshold > 65/100
-3. **Execution layer**: Places orders on Polymarket CLOB API, enforces circuit breakers
-4. **Supervision layer**: Claude-powered Health Checker (15min cron) and Strategy Reviewer (2h cron)
+1. **Data agents** (4 parallel): Technical (Binance candles + indicators), Sentiment (Fear & Greed), On-Chain (funding rate, liquidations), Order Flow (order book pressure)
+2. **Chief Trader**: Aggregates signals with learnable weights, decides LONG/SHORT
+3. **Position Manager**: Trailing stop, no time limit on winners
+4. **Optimizer**: Learns from outcomes — adjusts entry threshold, stop distance, agent weights
 
-Agents communicate via **Redis Streams**. State persisted in **PostgreSQL**.
+## Tech Stack (current prototype)
 
-## Tech Stack
+Python 3.13, FastAPI, Binance WebSocket, Anthropic SDK (claude-haiku-4-5 for agents, claude-sonnet-4-6 for chief), LightweightCharts, GridStack.js
 
-Python 3.12, Redis Streams, PostgreSQL, Docker Compose, Anthropic SDK (claude-sonnet-4-6), Pydantic v2, ccxt, websockets, prometheus-client, Grafana
-
-## Running the Dashboard (Prototype)
+## Running the Dashboard
 
 ```bash
-python3 dashboard.py  # serves on http://localhost:8080
+source .venv/bin/activate
+python3 dashboard.py  # http://localhost:8080
 ```
 
-Dependencies: `fastapi`, `uvicorn`, `httpx`, `numpy`, `websockets`
+Env vars: `COOLDOWN_SECONDS` (default 60), `INITIAL_BANKROLL` (default 100), `MIN_QUALITY` (default 0.40)
 
-The dashboard connects to Binance WS for real-time BTC data, builds 5s candles, computes RSI divergences, and simulates trades with a 30s cooldown and 70% win probability threshold.
+## Data Persistence
 
-## Circuit Breakers (Hard-coded, non-overridable)
+- `data/trades.json` — trade history (survives restarts)
+- `data/optimizer.json` — learned parameters (survives restarts)
+- PostgreSQL for production (TradeRepository supports both)
 
-- Drawdown > 15% daily bankroll → stop 24h
+## Circuit Breakers
+
+- Drawdown > 15% bankroll → stop
 - 5 consecutive losses → pause 1h
-- Polymarket API down > 2min → stop execution
-- Confidence < 65 → no trade
-- Single bet > 5% bankroll → capped
+- Single bet capped by Kelly criterion + max_stake_pct
 
-## Target Project Structure
+## Frontend Design
 
-```
-agents/{market,sentiment,onchain,polymarket,chief_trader,execution,health,reviewer}/
-shared/{redis_client,models,kelly}.py
-infra/{docker-compose.yml,prometheus/,grafana/}
-tests/
-```
+Jarvis HUD aesthetic — dark theme, cyan/green accents, Orbitron + Share Tech Mono fonts, GridStack drag-and-drop panels. Chart has EMA12, EMA26, Bollinger Bands overlays.
 
 ## Language
 
-Project documentation and code comments are in French. Variable/function names are in English.
+Documentation and comments in French. Variable/function names in English.

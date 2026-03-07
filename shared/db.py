@@ -1,21 +1,46 @@
 # shared/db.py
+import json as _json
 import os
 import time
 from typing import Optional
 
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+TRADES_FILE = os.path.join(DATA_DIR, "trades.json")
+
+
 class TradeRepository:
-    """Trade journal -- PostgreSQL in production, in-memory dict for tests."""
+    """Trade journal -- PostgreSQL in production, JSON file for local dev, in-memory for tests."""
 
     def __init__(self, database_url: str = None, fake: bool = False):
         self._url = database_url or os.environ.get("DATABASE_URL", "")
         self._fake = fake
         self._pool = None
-        # Fake storage for tests
+        # Fake storage for tests / local dev
         self._fake_trades: list[dict] = []
         self._fake_id = 0
 
+    def _load_from_file(self):
+        """Load trades from JSON file if it exists."""
+        if os.path.exists(TRADES_FILE):
+            try:
+                with open(TRADES_FILE) as f:
+                    data = _json.load(f)
+                self._fake_trades = data.get("trades", [])
+                self._fake_id = data.get("next_id", 0)
+            except Exception:
+                pass
+
+    def _save_to_file(self):
+        """Persist trades to JSON file."""
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(TRADES_FILE, "w") as f:
+            _json.dump({"trades": self._fake_trades, "next_id": self._fake_id}, f, indent=2)
+
     async def connect(self):
         if self._fake:
+            self._load_from_file()
+            if self._fake_trades:
+                print(f"[DB] Loaded {len(self._fake_trades)} trades from file")
             return
         import asyncpg
         self._pool = await asyncpg.create_pool(self._url, min_size=2, max_size=5)
@@ -48,6 +73,7 @@ class TradeRepository:
                 "status": "OPEN", "opened_at": time.time(), "closed_at": None,
                 "agent_signals": agent_signals,
             })
+            self._save_to_file()
             return self._fake_id
         async with self._pool.acquire() as conn:
             import json
@@ -72,6 +98,7 @@ class TradeRepository:
                     t["duration"] = duration
                     t["status"] = "CLOSED"
                     t["closed_at"] = time.time()
+            self._save_to_file()
             return
         async with self._pool.acquire() as conn:
             await conn.execute(

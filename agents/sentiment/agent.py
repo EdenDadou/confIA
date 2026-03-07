@@ -65,7 +65,7 @@ Classification: {"Extreme Fear" if fear_greed < 20 else "Fear" if fear_greed < 4
         else:
             score = int(35 - (fear_greed - 75) * 0.6)
         score = max(0, min(100, score))
-        direction = "up" if score >= 58 else "down" if score <= 42 else "neutral"
+        direction = "up" if score >= 52 else "down" if score <= 48 else "neutral"
         return {
             "score": score,
             "direction": direction,
