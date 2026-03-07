@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && cp -r src/dashboard/public dist/dashboard/public",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest"

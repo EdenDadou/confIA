@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTC SNIPER | Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Scan line overlay -->
+  <div class="scanlines"></div>
+
+  <!-- Header -->
+  <header class="hud-header">
+    <div class="header-left">
+      <div class="logo-block">
+        <span class="logo-icon">&#9678;</span>
+        <span class="logo-text">BTC SNIPER</span>
+      </div>
+      <span class="header-sub">COMMAND CENTER v1.0</span>
+    </div>
+    <div class="header-center">
+      <div class="status-indicator" id="ws-status">
+        <span class="pulse-dot"></span>
+        <span>LIVE</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">BTC PRICE</div>
+      <div class="stat-value" id="stat-price">--</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">BANKROLL</div>
+      <div class="stat-value" id="stat-bankroll">--</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">PnL</div>
+      <div class="stat-value" id="stat-pnl">--</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">WIN RATE</div>
+      <div class="stat-value" id="stat-winrate">--</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">TRADES</div>
+      <div class="stat-value" id="stat-trades">--</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">EVENTS</div>
+      <div class="stat-value" id="stat-events">--</div>
+    </div>
+  </div>
+
+  <!-- GridStack Layout -->
+  <div class="grid-stack" id="grid">
+    <!-- BTC Chart -->
+    <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="8" gs-h="5" gs-min-w="4" gs-min-h="3">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9670;</span> BTC / USDT
+        </div>
+        <div class="panel-body chart-container">
+          <div id="chart-main" style="width:100%;height:calc(100% - 80px);"></div>
+          <div id="chart-rsi" style="width:100%;height:80px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Feed -->
+    <div class="grid-stack-item" gs-x="8" gs-y="0" gs-w="4" gs-h="3" gs-min-w="3" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9889;</span> EVENT FEED
+        </div>
+        <div class="panel-body" id="event-feed">
+          <div class="empty-state">Waiting for events...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Position -->
+    <div class="grid-stack-item" gs-x="8" gs-y="3" gs-w="4" gs-h="2" gs-min-w="3" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9733;</span> POSITION
+        </div>
+        <div class="panel-body" id="position-panel">
+          <div class="empty-state">No active position</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="grid-stack-item" gs-x="0" gs-y="5" gs-w="4" gs-h="3" gs-min-w="3" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9881;</span> AGENTS
+        </div>
+        <div class="panel-body" id="agents-panel">
+          <div class="empty-state">Loading agents...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pattern Memory -->
+    <div class="grid-stack-item" gs-x="4" gs-y="5" gs-w="4" gs-h="3" gs-min-w="3" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9731;</span> PATTERN MEMORY
+        </div>
+        <div class="panel-body" id="patterns-panel">
+          <div class="empty-state">No patterns recorded</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trade Log -->
+    <div class="grid-stack-item" gs-x="0" gs-y="8" gs-w="12" gs-h="3" gs-min-w="6" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9744;</span> TRADE LOG
+        </div>
+        <div class="panel-body" id="tradelog-panel">
+          <div class="empty-state">No trades recorded</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optimizer -->
+    <div class="grid-stack-item" gs-x="8" gs-y="5" gs-w="4" gs-h="3" gs-min-w="3" gs-min-h="2">
+      <div class="grid-stack-item-content hud-panel">
+        <div class="panel-header">
+          <span class="panel-icon">&#9881;</span> OPTIMIZER
+        </div>
+        <div class="panel-body" id="optimizer-panel">
+          <div class="empty-state">Loading optimizer...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
