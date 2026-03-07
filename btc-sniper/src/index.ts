@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { CONFIG } from "./config/default.js";
 import { MarketEngine } from "./engine/market-engine.js";
 import { EventDetector, type MultiTFIndicators } from "./engine/event-detector.js";
@@ -157,9 +158,9 @@ async function main() {
 
   try {
     const { startDashboard } = await import("./dashboard/server.js");
-    await startDashboard();
+    await startDashboard(state);
   } catch (e) {
-    console.log("[DASHBOARD] Not available yet, skipping...");
+    console.log("[DASHBOARD] Not available yet, skipping...", e);
   }
 }
 

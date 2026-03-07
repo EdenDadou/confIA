@@ -12,24 +12,24 @@ export const CONFIG = {
     timeframes: ["1m", "5m", "15m"] as const,
   },
 
-  // Event detection
+  // Event detection — AGGRESSIVE: short cooldowns for testing
   events: {
-    RSI_EXTREME: { threshold_low: 25, threshold_high: 75, cooldown_ms: 5 * 60_000 },
-    EMA_CROSS: { cooldown_ms: 15 * 60_000 },
-    DIVERGENCE: { min_candles: 3, cooldown_ms: 10 * 60_000 },
-    VOLUME_SPIKE: { multiplier: 3, cooldown_ms: 3 * 60_000 },
-    BB_BREAKOUT: { cooldown_ms: 5 * 60_000 },
-    FUNDING_FLIP: { cooldown_ms: 30 * 60_000 },
-    LIQUIDATION_WAVE: { threshold_usd: 5_000_000, cooldown_ms: 15 * 60_000 },
+    RSI_EXTREME: { threshold_low: 30, threshold_high: 70, cooldown_ms: 60_000 },
+    EMA_CROSS: { cooldown_ms: 2 * 60_000 },
+    DIVERGENCE: { min_candles: 3, cooldown_ms: 2 * 60_000 },
+    VOLUME_SPIKE: { multiplier: 2, cooldown_ms: 60_000 },
+    BB_BREAKOUT: { cooldown_ms: 60_000 },
+    FUNDING_FLIP: { cooldown_ms: 5 * 60_000 },
+    LIQUIDATION_WAVE: { threshold_usd: 5_000_000, cooldown_ms: 5 * 60_000 },
   },
 
-  // Trading
+  // Trading — AGGRESSIVE for testing
   trading: {
     initial_bankroll: 100,
     stop_multiplier: 0.8,
-    max_stake_pct: 0.25,
-    min_conviction: 0.6,
-    leverage_min: 5,
+    max_stake_pct: 0.35,
+    min_conviction: 0.3,
+    leverage_min: 10,
     leverage_max: 50,
   },
 

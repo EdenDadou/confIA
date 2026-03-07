@@ -1,0 +1,21 @@
+[
+  {
+    "events": [
+      "RSI_EXTREME",
+      "BB_BREAKOUT"
+    ],
+    "direction": "SHORT",
+    "indicators_1m": {
+      "rsi": 78.05066747510566,
+      "ema12": 67929.376347291,
+      "ema26": 67879.35111367947
+    },
+    "indicators_5m": {
+      "rsi": 63.69313925171602,
+      "ema12": 67847.13134694032,
+      "ema26": 67838.91059318496
+    },
+    "conviction": 0.7,
+    "timestamp": 1772871844925
+  }
+]

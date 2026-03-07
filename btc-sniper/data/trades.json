@@ -1,0 +1,15 @@
+[
+  {
+    "direction": "SHORT",
+    "entry_price": 68032.1,
+    "stake": 25,
+    "leverage": 36,
+    "conviction": 0.7,
+    "events": [
+      "RSI_EXTREME",
+      "BB_BREAKOUT"
+    ],
+    "id": "trade_1772871844928_3qkko3",
+    "opened_at": 1772871844928
+  }
+]

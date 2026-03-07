@@ -189,7 +189,8 @@ function formatTime(ts) {
 
 function candleTime(ts) {
   // LightweightCharts expects UTC timestamp in seconds
-  return Math.floor(ts / 1000);
+  // Our candles already store time in seconds
+  return ts;
 }
 
 // --- Clock ---

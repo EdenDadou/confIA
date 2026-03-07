@@ -35,7 +35,7 @@ export class EventDetector {
     // RSI Extreme
     if (this.canFire("RSI_EXTREME", now)) {
       const cfg = CONFIG.events.RSI_EXTREME;
-      if (m1.rsi < cfg.threshold_low && m5.rsi < 40) {
+      if (m1.rsi < cfg.threshold_low && m5.rsi < 50) {
         events.push({
           type: "RSI_EXTREME",
           direction: "bullish",
@@ -44,7 +44,7 @@ export class EventDetector {
           timestamp: now,
         });
         this.lastFired.set("RSI_EXTREME", now);
-      } else if (m1.rsi > cfg.threshold_high && m5.rsi > 60) {
+      } else if (m1.rsi > cfg.threshold_high && m5.rsi > 50) {
         events.push({
           type: "RSI_EXTREME",
           direction: "bearish",

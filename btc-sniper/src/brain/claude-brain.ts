@@ -102,9 +102,11 @@ Your decision:`;
         messages: [{ role: "user", content: prompt }],
       });
 
-      const text =
+      let text =
         response.content[0].type === "text" ? response.content[0].text : "";
-      return JSON.parse(text.trim()) as BrainDecision;
+      // Strip markdown code fences if Claude wraps JSON in ```json ... ```
+      text = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      return JSON.parse(text) as BrainDecision;
     } catch (e) {
       console.error("[BRAIN] Claude error, using fallback:", e);
       return this.fallback(events, indicators);
@@ -118,22 +120,34 @@ Your decision:`;
     const bullish = events.filter((e) => e.direction === "bullish");
     const bearish = events.filter((e) => e.direction === "bearish");
 
-    if (bullish.length > bearish.length && bullish.length >= 2) {
+    // Aggressive mode: trade on any event, even single confluence
+    if (bullish.length > bearish.length && bullish.length >= 1) {
       return {
         action: "TRADE",
         direction: "LONG",
-        conviction: 0.6 + bullish.length * 0.05,
-        reasoning: `Fallback: ${bullish.length} bullish events detected`,
+        conviction: 0.5 + bullish.length * 0.1,
+        reasoning: `Fallback: ${bullish.length} bullish event(s) — aggressive mode`,
         suggested_stop_atr_mult: null,
       };
     }
 
-    if (bearish.length > bullish.length && bearish.length >= 2) {
+    if (bearish.length >= 1) {
       return {
         action: "TRADE",
         direction: "SHORT",
-        conviction: 0.6 + bearish.length * 0.05,
-        reasoning: `Fallback: ${bearish.length} bearish events detected`,
+        conviction: 0.5 + bearish.length * 0.1,
+        reasoning: `Fallback: ${bearish.length} bearish event(s) — aggressive mode`,
+        suggested_stop_atr_mult: null,
+      };
+    }
+
+    // Neutral events — still trade based on majority
+    if (events.length >= 1) {
+      return {
+        action: "TRADE",
+        direction: "LONG",
+        conviction: 0.5,
+        reasoning: `Fallback: ${events.length} event(s) detected — aggressive mode`,
         suggested_stop_atr_mult: null,
       };
     }
@@ -142,7 +156,7 @@ Your decision:`;
       action: "SKIP",
       direction: "LONG",
       conviction: 0,
-      reasoning: "Fallback: insufficient confluence",
+      reasoning: "Fallback: no events",
       suggested_stop_atr_mult: null,
     };
   }

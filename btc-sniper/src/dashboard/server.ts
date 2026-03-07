@@ -3,12 +3,11 @@ import fastifyStatic from "@fastify/static";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { CONFIG } from "../config/default.js";
-import { state } from "../index.js";
 import { computeEMA, computeBollinger, computeRSI } from "../engine/indicators.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export async function startDashboard() {
+export async function startDashboard(state: any) {
   const app = Fastify({ logger: false });
 
   await app.register(fastifyStatic, {
@@ -18,7 +17,7 @@ export async function startDashboard() {
   app.get("/api/data", async () => {
     const pos = state.posManager.getState();
     const candles1m = state.market.getBuffer("1m").getAll();
-    const closes = candles1m.map((c) => c.close);
+    const closes = candles1m.map((c: any) => c.close);
     const stats = state.journal.stats();
     const sentiment = state.sentimentAgent.data;
     const onchain = state.onchainAgent.data;

@@ -17,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@fastify/static": "^9.0.0",
+    "dotenv": "^17.3.1",
     "fastify": "^5.8.1",
     "typescript": "^5.9.3",
     "ws": "^8.19.0"
