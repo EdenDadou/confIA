@@ -26,7 +26,7 @@ export const CONFIG = {
   // Trading — AGGRESSIVE for testing
   trading: {
     initial_bankroll: 100,
-    stop_multiplier: 0.8,
+    stop_multiplier: 1.5,
     max_stake_pct: 0.35,
     min_conviction: 0.3,
     leverage_min: 10,

@@ -126,7 +126,8 @@ async function onCandle() {
       events: events.map((e) => e.type),
     });
 
-    console.log(`[TRADE] OPENED ${decision.direction} $${stake.toFixed(2)} @${price.toFixed(2)} lev=${leverage}x stop=${posManager.position!.stopLoss.toFixed(2)}`);
+    const stopDist = (atr * stopMult).toFixed(2);
+    console.log(`[TRADE] OPENED ${decision.direction} $${stake.toFixed(2)} @${price.toFixed(2)} lev=${leverage}x stop=${posManager.position!.stopLoss.toFixed(2)} (ATR=${atr.toFixed(2)} × ${stopMult} = $${stopDist} distance)`);
   }
 }
 
@@ -143,10 +144,18 @@ async function main() {
   market.connect();
   market.on("candle", () => onCandle());
 
+  // Throttle tick check — only every 5s to avoid noise-induced stop-outs
+  let lastTickCheck = 0;
   market.on("tick", (price: number) => {
+    const now = Date.now();
+    if (now - lastTickCheck < 5000) return;
+    lastTickCheck = now;
     if (posManager.hasPosition) {
       const tick = posManager.tick(price);
-      if (tick.action === "CLOSE") closePosition(price, tick.reason!);
+      if (tick.action === "CLOSE") {
+        console.log(`[STOP] Trailing stop hit @${price.toFixed(2)} stop=${tick.stopLoss}`);
+        closePosition(price, tick.reason!);
+      }
     }
   });
 
