@@ -2,7 +2,7 @@ services:
   - type: web
     name: btc-sniper
     runtime: node
-    plan: starter
+    plan: free
     rootDir: btc-sniper
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
