@@ -3,7 +3,6 @@ services:
     name: btc-sniper
     runtime: node
     plan: starter
-    rootDir: btc-sniper
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
     envVars:
